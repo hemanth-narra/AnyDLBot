@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# (c) Shrimadhav U K
 
-# the logging things
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -24,7 +22,8 @@ async def place_water_mark(input_file, output_file, water_mark_file):
     shrink_watermark_file_genertor_command = [
         "ffmpeg",
         "-i", water_mark_file,
-        "-y -v quiet",
+        "-y",
+        "-v", "quiet",
         "-vf",
         "scale={}*0.5:-1".format(width),
         watermarked_file

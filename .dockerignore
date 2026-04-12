@@ -1,0 +1,28 @@
+# Docker build context exclusions
+.git
+.github
+__pycache__
+*.py[cod]
+*.session
+*.session-journal
+*.DB
+
+# Local config (secrets – never bake into image)
+config.py
+
+# Downloaded files directory
+DOWNLOADS/
+
+# IDE / OS files
+.env
+.venv
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Heroku-specific (not needed in Docker)
+Procfile
+app.json
+runtime.txt

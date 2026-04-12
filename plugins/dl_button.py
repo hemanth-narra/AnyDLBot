@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# (c) Shrimadhav U K
 
-# the logging things
 import logging
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -80,7 +78,7 @@ async def ddl_call_back(bot, update):
         chat_id=update.message.chat.id,
         message_id=update.message.message_id
     )
-    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id)
+    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.message_id}"
     if not os.path.isdir(tmp_directory_for_each_user):
         os.makedirs(tmp_directory_for_each_user)
     download_directory = tmp_directory_for_each_user + "/" + custom_file_name
@@ -97,7 +95,7 @@ async def ddl_call_back(bot, update):
                 update.message.message_id,
                 c_time
             )
-        except asyncio.TimeOutError:
+        except asyncio.TimeoutError:
             await bot.edit_message_text(
                 text=Translation.SLOW_URL_DECED,
                 chat_id=update.message.chat.id,
@@ -121,7 +119,10 @@ async def ddl_call_back(bot, update):
         if file_size > Config.TG_MAX_FILE_SIZE:
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
-                text=Translation.RCHD_TG_API_LIMIT,
+                text=Translation.RCHD_TG_API_LIMIT.format(
+                    (end_one - start).seconds,
+                    humanbytes(file_size)
+                ),
                 message_id=update.message.message_id
             )
         else:
