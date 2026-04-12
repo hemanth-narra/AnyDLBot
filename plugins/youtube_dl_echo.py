@@ -100,7 +100,7 @@ async def echo(bot, update):
                 url = url[o:o + l]
     if Config.HTTP_PROXY != "":
         command_to_exec = [
-            "youtube-dl",
+            "yt-dlp",
             "--no-warnings",
             "--youtube-skip-dash-manifest",
             "-j",
@@ -109,7 +109,7 @@ async def echo(bot, update):
         ]
     else:
         command_to_exec = [
-            "youtube-dl",
+            "yt-dlp",
             "--no-warnings",
             "--youtube-skip-dash-manifest",
             "-j",
@@ -137,7 +137,7 @@ async def echo(bot, update):
     # https://github.com/rg3/youtube-dl/issues/2630#issuecomment-38635239
     if e_response and "nonnumeric port" not in e_response:
         # logger.warn("Status : FAIL", exc.returncode, exc.output)
-        error_message = e_response.replace("please report this issue on https://yt-dl.org/bug . Make sure you are using the latest version; see  https://yt-dl.org/update  on how to update. Be sure to call youtube-dl with the --verbose flag and include its complete output.", "")
+        error_message = e_response.replace("please report this issue on https://github.com/yt-dlp/yt-dlp/issues . Make sure you are using the latest version. Be sure to call yt-dlp with the --verbose flag and include its complete output.", "")
         if "This video is only available for registered users." in error_message:
             error_message += Translation.SET_CUSTOM_USERNAME_PASSWORD
         await bot.send_message(
@@ -155,7 +155,7 @@ async def echo(bot, update):
             x_reponse, _ = x_reponse.split("\n")
         response_json = json.loads(x_reponse)
         save_ytdl_json_path = Config.DOWNLOAD_LOCATION + \
-            "/" + str(update.from_user.id) + ".json"
+            "/" + str(update.from_user.id) + f"_{update.message_id}" + ".json"
         with open(save_ytdl_json_path, "w", encoding="utf8") as outfile:
             json.dump(response_json, outfile, ensure_ascii=False)
         # logger.info(response_json)
@@ -271,7 +271,7 @@ async def echo(bot, update):
         thumb_image_path = DownLoadFile(
             thumbnail_image,
             Config.DOWNLOAD_LOCATION + "/" +
-            str(update.from_user.id) + ".webp",
+            str(update.from_user.id) + f"_{update.message_id}" + ".webp",
             Config.CHUNK_SIZE,
             None,  # bot,
             Translation.DOWNLOAD_START,
