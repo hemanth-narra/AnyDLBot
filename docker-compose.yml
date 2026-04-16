@@ -13,7 +13,6 @@ services:
       # ── Optional ──────────────────────────────────────────
       - AUTH_USERS=${AUTH_USERS:-}
       - BANNED_USERS=${BANNED_USERS:-}
-      - UPDATE_CHANNEL=${UPDATE_CHANNEL:-}
       - HTTP_PROXY=${HTTP_PROXY:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-128}
       - DEF_THUMB_NAIL_VID_S=${DEF_THUMB_NAIL_VID_S:-}
