@@ -115,7 +115,6 @@ async def youtube_dl_call_back(bot, update):
         command_to_exec = [
             "yt-dlp",
             "-c",
-            "--max-filesize", str(Config.TG_MAX_FILE_SIZE),
             "--prefer-ffmpeg",
             "--extract-audio",
             "--audio-format", youtube_dl_ext,
@@ -124,14 +123,24 @@ async def youtube_dl_call_back(bot, update):
             "-o", download_directory
         ]
     else:
-        # command_to_exec = ["youtube-dl", "-f", youtube_dl_format, "--hls-prefer-ffmpeg", "--recode-video", "mp4", "-k", youtube_dl_url, "-o", download_directory]
-        minus_f_format = youtube_dl_format
         if "youtu" in youtube_dl_url:
-            minus_f_format = youtube_dl_format + "+bestaudio"
+            # Build a fallback chain so yt-dlp gracefully degrades:
+            #   1. Exact format + best audio (ideal quality)
+            #   2. Exact format alone (no merge, e.g. when audio stream unavailable)
+            #   3. Best video+audio up to the same height
+            #   4. Generic best available
+            # This prevents the "Requested format is not available" hard-fail.
+            minus_f_format = (
+                f"{youtube_dl_format}+bestaudio"
+                f"/{youtube_dl_format}"
+                f"/bestvideo+bestaudio"
+                f"/best"
+            )
+        else:
+            minus_f_format = youtube_dl_format
         command_to_exec = [
             "yt-dlp",
             "-c",
-            "--max-filesize", str(Config.TG_MAX_FILE_SIZE),
             "--embed-subs",
             "-f", minus_f_format,
             "--hls-prefer-ffmpeg", youtube_dl_url,
