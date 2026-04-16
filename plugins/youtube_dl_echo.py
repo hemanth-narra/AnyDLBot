@@ -27,7 +27,8 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 from helper_funcs.display_progress import humanbytes
 from helper_funcs.help_uploadbot import DownLoadFile
 
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, MessageEntityType
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.enums import MessageEntityType
 
 
 @pyrogram.Client.on_message(pyrogram.filters.regex(pattern=".*http.*"))
