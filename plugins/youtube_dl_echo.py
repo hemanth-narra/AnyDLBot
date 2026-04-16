@@ -82,6 +82,7 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
+            "--no-check-formats",   # Skip format validation during info fetch
             "-j",
             url,
             "--proxy", Config.HTTP_PROXY
@@ -90,6 +91,7 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
+            "--no-check-formats",   # Skip format validation during info fetch
             "-j",
             url
         ]
@@ -115,10 +117,15 @@ async def echo(bot, update):
     # logger.info(e_response)
     t_response = stdout.decode().strip()
     # logger.info(t_response)
-    # https://github.com/rg3/youtube-dl/issues/2630#issuecomment-38635239
-    if e_response and "nonnumeric port" not in e_response:
-        # logger.warn("Status : FAIL", exc.returncode, exc.output)
-        error_message = e_response.replace("please report this issue on https://github.com/yt-dlp/yt-dlp/issues . Make sure you are using the latest version. Be sure to call yt-dlp with the --verbose flag and include its complete output.", "")
+    # Check returncode instead of any stderr — yt-dlp writes deprecation
+    # WARNINGs to stderr even on success, which the old e_response check
+    # mistakenly treated as hard failures.
+    if process.returncode != 0:
+        error_message = e_response.replace(
+            "please report this issue on https://github.com/yt-dlp/yt-dlp/issues . Make sure you are using the latest version. Be sure to call yt-dlp with the --verbose flag and include its complete output.", ""
+        ).strip()
+        if not error_message:
+            error_message = "yt-dlp failed (exit code %d)" % process.returncode
         if "This video is only available for registered users." in error_message:
             error_message += Translation.SET_CUSTOM_USERNAME_PASSWORD
         await bot.send_message(
