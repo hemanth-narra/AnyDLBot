@@ -40,7 +40,7 @@ from pyrogram.enums import MessageEntityType, ParseMode
 async def youtube_dl_call_back(bot, update):
     cb_data = update.data
     # youtube_dl extractors
-    tg_send_type, youtube_dl_format, youtube_dl_ext = cb_data.split("|")
+    tg_send_type, youtube_dl_format, youtube_dl_ext = cb_data.split("|", 2)
     thumb_image_path = Config.DOWNLOAD_LOCATION + \
         "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.id}.jpg"
     save_ytdl_json_path = Config.DOWNLOAD_LOCATION + \
@@ -174,13 +174,22 @@ async def youtube_dl_call_back(bot, update):
     t_response = stdout.decode().strip()
     logger.info(e_response)
     logger.info(t_response)
-    ad_string_to_replace = "please report this issue on https://github.com/yt-dlp/yt-dlp/issues . Make sure you are using the latest version. Be sure to call yt-dlp with the --verbose flag and include its complete output."
-    if e_response and ad_string_to_replace in e_response:
-        error_message = e_response.replace(ad_string_to_replace, "")
+    if process.returncode != 0:
+        # yt-dlp failed — surface the actual error to the user
+        error_message = e_response or "yt-dlp exited with an unknown error."
+        # Strip verbose boilerplate that yt-dlp sometimes appends
+        for noise in [
+            "please report this issue on https://github.com/yt-dlp/yt-dlp/issues . Make sure you are using the latest version. Be sure to call yt-dlp with the --verbose flag and include its complete output.",
+            "WARNING: ",
+        ]:
+            error_message = error_message.replace(noise, "")
+        error_message = error_message.strip()
         await bot.edit_message_text(
             chat_id=update.message.chat.id,
             message_id=update.message.id,
-            text=error_message
+            text=Translation.NO_VOID_FORMAT_FOUND.format(error_message),
+            parse_mode=ParseMode.HTML,
+            disable_web_page_preview=True
         )
         return False
     if t_response:

@@ -144,57 +144,56 @@ async def echo(bot, update):
         duration = None
         if "duration" in response_json:
             duration = response_json["duration"]
+
+        is_youtube = "youtu" in url
+
         if "formats" in response_json:
+            seen_heights = set()
             for formats in response_json["formats"]:
-                format_id = formats.get("format_id")
-                format_string = formats.get("format_note")
-                if format_string is None:
-                    format_string = formats.get("format")
+                format_id   = formats.get("format_id")
+                format_note = formats.get("format_note")
+                if format_note is None:
+                    format_note = formats.get("format")
                 format_ext = formats.get("ext")
+                height     = formats.get("height")
                 approx_file_size = ""
                 if "filesize" in formats:
                     approx_file_size = humanbytes(formats["filesize"])
-                cb_string_video = "{}|{}|{}".format(
-                    "video", format_id, format_ext)
-                cb_string_file = "{}|{}|{}".format(
-                    "file", format_id, format_ext)
-                if format_string is not None and not "audio only" in format_string:
-                    ikeyboard = [
-                        InlineKeyboardButton(
-                            "S " + format_string + " video " + approx_file_size + " ",
-                            callback_data=(cb_string_video).encode("UTF-8")
-                        ),
-                        InlineKeyboardButton(
-                            "D " + format_ext + " " + approx_file_size + " ",
-                            callback_data=(cb_string_file).encode("UTF-8")
-                        )
-                    ]
-                    """if duration is not None:
-                        cb_string_video_message = "{}|{}|{}".format(
-                            "vm", format_id, format_ext)
-                        ikeyboard.append(
-                            InlineKeyboardButton(
-                                "VM",
-                                callback_data=(
-                                    cb_string_video_message).encode("UTF-8")
-                            )
-                        )"""
+
+                # Skip audio-only streams - MP3 buttons are added below
+                if format_note is not None and "audio only" in format_note:
+                    continue
+
+                if is_youtube and height:
+                    # Stable quality-based selector - not volatile format IDs
+                    h = height
+                    fmt_selector = (
+                        "bestvideo[height<=%d][ext=mp4]+bestaudio[ext=m4a]" % h
+                        + "/bestvideo[height<=%d]+bestaudio" % h
+                        + "/best[height<=%d]" % h
+                        + "/best"
+                    )
+                    if height in seen_heights:
+                        continue
+                    seen_heights.add(height)
+                    label = "%dp" % height
+                    cb_string_video = "video|%s|mp4" % fmt_selector
+                    cb_string_file  = "file|%s|mp4" % fmt_selector
                 else:
-                    # special weird case :\
-                    ikeyboard = [
-                        InlineKeyboardButton(
-                            "SVideo [" +
-                            "] ( " +
-                            approx_file_size + " )",
-                            callback_data=(cb_string_video).encode("UTF-8")
-                        ),
-                        InlineKeyboardButton(
-                            "DFile [" +
-                            "] ( " +
-                            approx_file_size + " )",
-                            callback_data=(cb_string_file).encode("UTF-8")
-                        )
-                    ]
+                    label = format_note or str(format_id)
+                    cb_string_video = "video|%s|%s" % (format_id, format_ext)
+                    cb_string_file  = "file|%s|%s" % (format_id, format_ext)
+
+                ikeyboard = [
+                    InlineKeyboardButton(
+                        "📹 " + label + " video " + approx_file_size,
+                        callback_data=cb_string_video.encode("UTF-8")
+                    ),
+                    InlineKeyboardButton(
+                        "📄 " + label + " file " + approx_file_size,
+                        callback_data=cb_string_file.encode("UTF-8")
+                    )
+                ]
                 inline_keyboard.append(ikeyboard)
             if duration is not None:
                 cb_string_64 = "{}|{}|{}".format("audio", "64k", "mp3")
