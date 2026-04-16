@@ -8,8 +8,6 @@ logger = logging.getLogger(__name__)
 
 import asyncio
 import aiohttp
-import json
-import math
 import os
 import shutil
 import time
@@ -243,9 +241,9 @@ async def ddl_call_back(bot, update):
                 # https://stackoverflow.com/a/37631799/4723940
                 # img.thumbnail((90, 90))
                 if tg_send_type == "file":
-                    img.resize((320, height))
+                    img = img.resize((320, height))
                 else:
-                    img.resize((90, height))
+                    img = img.resize((90, height))
                 img.save(thumb_image_path, "JPEG")
                 # https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#create-thumbnails
             else:
@@ -347,7 +345,7 @@ async def ddl_call_back(bot, update):
 async def download_coroutine(bot, session, url, file_name, chat_id, message_id, start):
     downloaded = 0
     display_message = ""
-    async with session.get(url, timeout=Config.PROCESS_MAX_TIMEOUT) as response:
+    async with session.get(url, timeout=aiohttp.ClientTimeout(total=Config.PROCESS_MAX_TIMEOUT)) as response:
         total_length = int(response.headers["Content-Length"])
         content_type = response.headers["Content-Type"]
         if "text" in content_type and total_length < 500:

@@ -15,7 +15,7 @@ URL | filename | username | password"""
     DOWNLOAD_START = "trying to download"
     UPLOAD_START = "trying to upload"
     RCHD_BOT_API_LIMIT = "size greater than maximum allowed size (50MB). Neverthless, trying to upload."
-    RCHD_TG_API_LIMIT = "Downloaded in {} seconds.\nDetected File Size: {}\nSorry. But, I cannot upload files greater than 1.5GB due to Telegram API limitations."
+    RCHD_TG_API_LIMIT = "Downloaded in {} seconds.\nDetected File Size: {}\nSorry. But, I cannot upload files greater than 2 GB due to Telegram API limitations."
     SPLITTING_VIDEO = "⚙️ File size is <b>{}</b> — larger than Telegram's 2 GB limit.\nSplitting into parts using FFmpeg. Please wait…"
     UPLOADING_PART = "📤 Uploading part <b>{}/{}</b>…"
     SPLIT_UPLOAD_DONE = "✅ Done! Uploaded <b>{} parts</b> in <b>{} seconds</b> total.\n📦 Each part is under 2 GB."
@@ -31,11 +31,11 @@ URL | filename | username | password"""
     NO_CUSTOM_THUMB_NAIL_FOUND = "No Custom ThumbNail found."
     NO_VOID_FORMAT_FOUND = "ERROR...\n<b>YouTubeDL</b> said: {}"
     USER_ADDED_TO_DB = "User <a href='tg://user?id={}'>{}</a> added to {} till {}."
-    CURENT_PLAN_DETAILS = """Current plan details
+    CURENT_PLAN_DETAILS = """Your account details
 --------
 Telegram ID: <code>{}</code>
-Plan name: Free Cloned User
-Expires on: 31/12/2020"""
+Plan: {}
+Status: {}"""
     HELP_USER = """Hai am URL Uploader bot..
     
 1. Send url (Link|New Name with Extension).

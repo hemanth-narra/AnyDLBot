@@ -27,6 +27,7 @@ import pyrogram
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
 
 from helper_funcs.display_progress import progress_for_pyrogram, humanbytes
+from helper_funcs.split_video import split_video, SPLIT_SIZE_BYTES
 from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
 # https://stackoverflow.com/a/37631799/4723940
@@ -181,12 +182,96 @@ async def youtube_dl_call_back(bot, update):
             download_directory = os.path.splitext(download_directory)[0] + "." + "mkv"
             # https://stackoverflow.com/a/678242/4723940
             file_size = os.stat(download_directory).st_size
-        if file_size > Config.TG_MAX_FILE_SIZE:
+        if file_size > SPLIT_SIZE_BYTES:
+            # ── File is too big for a single Telegram upload → split it ──
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
-                text=Translation.RCHD_TG_API_LIMIT.format(time_taken_for_download, humanbytes(file_size)),
-                message_id=update.message.message_id
+                text=Translation.SPLITTING_VIDEO.format(humanbytes(file_size)),
+                message_id=update.message.message_id,
+                parse_mode="html"
             )
+            try:
+                parts = await split_video(download_directory, tmp_directory_for_each_user)
+            except RuntimeError as split_err:
+                await bot.edit_message_text(
+                    chat_id=update.message.chat.id,
+                    text=Translation.NO_VOID_FORMAT_FOUND.format(str(split_err)),
+                    message_id=update.message.message_id,
+                    parse_mode="html"
+                )
+                return False
+
+            total_parts = len(parts)
+            upload_start_time = time.time()
+            for idx, part_path in enumerate(parts, start=1):
+                await bot.edit_message_text(
+                    chat_id=update.message.chat.id,
+                    text=Translation.UPLOADING_PART.format(idx, total_parts),
+                    message_id=update.message.message_id,
+                    parse_mode="html"
+                )
+                part_start = time.time()
+                if tg_send_type in ("video", "vm", "audio"):
+                    p_width, p_height, p_duration = 0, 0, 0
+                    try:
+                        meta = extractMetadata(createParser(part_path))
+                        if meta is not None:
+                            if meta.has("duration"):
+                                p_duration = meta.get("duration").seconds
+                            if meta.has("width"):
+                                p_width = meta.get("width")
+                            if meta.has("height"):
+                                p_height = meta.get("height")
+                    except Exception:
+                        pass
+                    await bot.send_video(
+                        chat_id=update.message.chat.id,
+                        video=part_path,
+                        caption=f"Part {idx}/{total_parts}",
+                        duration=p_duration,
+                        width=p_width,
+                        height=p_height,
+                        supports_streaming=True,
+                        thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
+                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        progress=progress_for_pyrogram,
+                        progress_args=(
+                            Translation.UPLOADING_PART.format(idx, total_parts),
+                            update.message,
+                            part_start
+                        )
+                    )
+                else:
+                    await bot.send_document(
+                        chat_id=update.message.chat.id,
+                        document=part_path,
+                        caption=f"Part {idx}/{total_parts}",
+                        thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
+                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        progress=progress_for_pyrogram,
+                        progress_args=(
+                            Translation.UPLOADING_PART.format(idx, total_parts),
+                            update.message,
+                            part_start
+                        )
+                    )
+                try:
+                    os.remove(part_path)
+                except Exception:
+                    pass
+
+            total_elapsed = round(time.time() - upload_start_time)
+            await bot.edit_message_text(
+                chat_id=update.message.chat.id,
+                text=Translation.SPLIT_UPLOAD_DONE.format(total_parts, total_elapsed),
+                message_id=update.message.message_id,
+                parse_mode="html"
+            )
+            try:
+                shutil.rmtree(tmp_directory_for_each_user)
+            except Exception:
+                pass
+            return True
         else:
             is_w_f = False
             images = await generate_screen_shots(
@@ -233,9 +318,9 @@ async def youtube_dl_call_back(bot, update):
                 # https://stackoverflow.com/a/37631799/4723940
                 # img.thumbnail((90, 90))
                 if tg_send_type == "file":
-                    img.resize((320, height))
+                    img = img.resize((320, height))
                 else:
-                    img.resize((90, height))
+                    img = img.resize((90, height))
                 img.save(thumb_image_path, "JPEG")
                 # https://pillow.readthedocs.io/en/3.1.x/reference/Image.html#create-thumbnails
                 
@@ -341,12 +426,13 @@ async def youtube_dl_call_back(bot, update):
                                 )
                             )
                         i = i + 1
-            await bot.send_media_group(
-                chat_id=update.message.chat.id,
-                disable_notification=True,
-                reply_to_message_id=update.message.message_id,
-                media=media_album_p
-            )
+            if media_album_p:
+                await bot.send_media_group(
+                    chat_id=update.message.chat.id,
+                    disable_notification=True,
+                    reply_to_message_id=update.message.message_id,
+                    media=media_album_p
+                )
             #
             try:
                 shutil.rmtree(tmp_directory_for_each_user)

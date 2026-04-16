@@ -11,7 +11,6 @@ services:
       - APP_ID=${APP_ID}
       - API_HASH=${API_HASH}
       # ── Optional ──────────────────────────────────────────
-      - AUTH_USERS=${AUTH_USERS:-}
       - BANNED_USERS=${BANNED_USERS:-}
       - HTTP_PROXY=${HTTP_PROXY:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-128}
