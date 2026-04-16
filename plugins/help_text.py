@@ -19,6 +19,7 @@ from translation import Translation
 
 import pyrogram
 logging.getLogger("pyrogram").setLevel(logging.WARNING)
+from pyrogram.enums import ParseMode
 
 def GetExpiryDate(chat_id):
     expires_at = (str(chat_id), "Free User", "N/A")
@@ -31,7 +32,7 @@ async def help_user(bot, update):
     await bot.send_message(
         chat_id=update.chat.id,
         text=Translation.HELP_USER,
-        parse_mode="html",
+        parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
         reply_to_message_id=update.id
     )
@@ -45,7 +46,7 @@ async def get_me_info(bot, update):
     await bot.send_message(
         chat_id=update.chat.id,
         text=Translation.CURENT_PLAN_DETAILS.format(chat_id, plan_type, expires_at),
-        parse_mode="html",
+        parse_mode=ParseMode.HTML,
         disable_web_page_preview=True,
         reply_to_message_id=update.id
     )
@@ -67,7 +68,7 @@ async def upgrade(bot, update):
     await bot.send_message(
         chat_id=update.chat.id,
         text=Translation.UPGRADE_TEXT,
-        parse_mode="html",
+        parse_mode=ParseMode.HTML,
         reply_to_message_id=update.id,
         disable_web_page_preview=True
     )

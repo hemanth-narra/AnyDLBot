@@ -31,7 +31,7 @@ from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
 # https://stackoverflow.com/a/37631799/4723940
 from PIL import Image
-from pyrogram.enums import MessageEntityType
+from pyrogram.enums import MessageEntityType, ParseMode
 
 
 async def ddl_call_back(bot, update):
@@ -122,7 +122,7 @@ async def ddl_call_back(bot, update):
                 chat_id=update.message.chat.id,
                 text=Translation.SPLITTING_VIDEO.format(humanbytes(file_size)),
                 message_id=update.message.id,
-                parse_mode="html"
+                parse_mode=ParseMode.HTML
             )
             try:
                 parts = await split_video(download_directory, tmp_directory_for_each_user)
@@ -131,7 +131,7 @@ async def ddl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     text=Translation.NO_VOID_FORMAT_FOUND.format(str(split_err)),
                     message_id=update.message.id,
-                    parse_mode="html"
+                    parse_mode=ParseMode.HTML
                 )
                 return False
 
@@ -143,7 +143,7 @@ async def ddl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     text=Translation.UPLOADING_PART.format(idx, total_parts),
                     message_id=update.message.id,
-                    parse_mode="html"
+                    parse_mode=ParseMode.HTML
                 )
                 part_start = time.time()
                 if tg_send_type in ("video", "vm"):
@@ -201,7 +201,7 @@ async def ddl_call_back(bot, update):
                 chat_id=update.message.chat.id,
                 text=Translation.SPLIT_UPLOAD_DONE.format(total_parts, total_elapsed),
                 message_id=update.message.id,
-                parse_mode="html"
+                parse_mode=ParseMode.HTML
             )
             # Clean up original large file
             try:

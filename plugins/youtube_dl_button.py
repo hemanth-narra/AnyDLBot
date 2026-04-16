@@ -34,7 +34,7 @@ from hachoir.parser import createParser
 from PIL import Image
 from helper_funcs.help_Nekmo_ffmpeg import generate_screen_shots
 from pyrogram.types import InputMediaPhoto
-from pyrogram.enums import MessageEntityType
+from pyrogram.enums import MessageEntityType, ParseMode
 
 
 async def youtube_dl_call_back(bot, update):
@@ -189,7 +189,7 @@ async def youtube_dl_call_back(bot, update):
                 chat_id=update.message.chat.id,
                 text=Translation.SPLITTING_VIDEO.format(humanbytes(file_size)),
                 message_id=update.message.id,
-                parse_mode="html"
+                parse_mode=ParseMode.HTML
             )
             try:
                 parts = await split_video(download_directory, tmp_directory_for_each_user)
@@ -198,7 +198,7 @@ async def youtube_dl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     text=Translation.NO_VOID_FORMAT_FOUND.format(str(split_err)),
                     message_id=update.message.id,
-                    parse_mode="html"
+                    parse_mode=ParseMode.HTML
                 )
                 return False
 
@@ -209,7 +209,7 @@ async def youtube_dl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     text=Translation.UPLOADING_PART.format(idx, total_parts),
                     message_id=update.message.id,
-                    parse_mode="html"
+                    parse_mode=ParseMode.HTML
                 )
                 part_start = time.time()
                 if tg_send_type in ("video", "vm", "audio"):
@@ -266,7 +266,7 @@ async def youtube_dl_call_back(bot, update):
                 chat_id=update.message.chat.id,
                 text=Translation.SPLIT_UPLOAD_DONE.format(total_parts, total_elapsed),
                 message_id=update.message.id,
-                parse_mode="html"
+                parse_mode=ParseMode.HTML
             )
             try:
                 shutil.rmtree(tmp_directory_for_each_user)
@@ -334,7 +334,7 @@ async def youtube_dl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     audio=download_directory,
                     caption=description,
-                    parse_mode="HTML",
+                    parse_mode=ParseMode.HTML,
                     duration=duration,
                     # performer=response_json["uploader"],
                     # title=response_json["title"],
@@ -354,7 +354,7 @@ async def youtube_dl_call_back(bot, update):
                     document=download_directory,
                     thumb=thumb_image_path,
                     caption=description,
-                    parse_mode="HTML",
+                    parse_mode=ParseMode.HTML,
                     # reply_markup=reply_markup,
                     reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
@@ -384,7 +384,7 @@ async def youtube_dl_call_back(bot, update):
                     chat_id=update.message.chat.id,
                     video=download_directory,
                     caption=description,
-                    parse_mode="HTML",
+                    parse_mode=ParseMode.HTML,
                     duration=duration,
                     width=width,
                     height=height,
@@ -417,7 +417,7 @@ async def youtube_dl_call_back(bot, update):
                                 InputMediaPhoto(
                                     media=image,
                                     caption=caption,
-                                    parse_mode="html"
+                                    parse_mode=ParseMode.HTML
                                 )
                             )
                         else:
