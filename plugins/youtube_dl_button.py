@@ -147,6 +147,9 @@ async def youtube_dl_call_back(bot, update):
         command_to_exec.append("--password")
         command_to_exec.append(youtube_dl_password)
     command_to_exec.append("--no-warnings")
+    # Pass cookies file if configured (helps bypass YouTube bot-detection)
+    if Config.YTDL_COOKIES_FILE and os.path.isfile(Config.YTDL_COOKIES_FILE):
+        command_to_exec += ["--cookies", Config.YTDL_COOKIES_FILE]
     # command_to_exec.append("--quiet")
     logger.info(command_to_exec)
     start = datetime.now()

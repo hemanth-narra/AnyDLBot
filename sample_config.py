@@ -18,8 +18,11 @@ class Config(object):
     # default thumbnail to be used in the videos
     DEF_THUMB_NAIL_VID_S = os.environ.get("DEF_THUMB_NAIL_VID_S", "https://placehold.it/90x90")
     # proxy for accessing youtube-dl in GeoRestricted Areas
-    # Get your own proxy from https://github.com/rg3/youtube-dl/issues/1091#issuecomment-230163061
     HTTP_PROXY = os.environ.get("HTTP_PROXY", "")
+    # Path to a Netscape cookies.txt file — bypasses YouTube bot-detection.
+    # Export via: yt-dlp --cookies-from-browser chrome --cookies /path/cookies.txt <url>
+    # Then mount the file into the container and set this env var to its path.
+    YTDL_COOKIES_FILE = os.environ.get("YTDL_COOKIES_FILE", "")
     # maximum message length in Telegram
     MAX_MESSAGE_LENGTH = 4096
     # set timeout for subprocess

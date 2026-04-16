@@ -1,0 +1,4 @@
+﻿# Netscape HTTP Cookie File
+# Export from your browser using yt-dlp:
+# yt-dlp --cookies-from-browser chrome --cookies cookies.txt 'https://youtube.com/watch?v=EXAMPLE'
+# Then replace this file with the exported cookies.txt and restart the container.

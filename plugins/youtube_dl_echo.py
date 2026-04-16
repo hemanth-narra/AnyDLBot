@@ -82,7 +82,6 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
-            "--youtube-skip-dash-manifest",
             "-j",
             url,
             "--proxy", Config.HTTP_PROXY
@@ -91,10 +90,12 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
-            "--youtube-skip-dash-manifest",
             "-j",
             url
         ]
+    # Pass cookies file if configured (helps bypass YouTube bot-detection)
+    if Config.YTDL_COOKIES_FILE and os.path.isfile(Config.YTDL_COOKIES_FILE):
+        command_to_exec += ["--cookies", Config.YTDL_COOKIES_FILE]
     if youtube_dl_username is not None:
         command_to_exec.append("--username")
         command_to_exec.append(youtube_dl_username)

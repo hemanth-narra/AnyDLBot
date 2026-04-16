@@ -15,8 +15,15 @@ services:
       - HTTP_PROXY=${HTTP_PROXY:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-128}
       - DEF_THUMB_NAIL_VID_S=${DEF_THUMB_NAIL_VID_S:-}
+      # Optional: path to a Netscape cookies.txt inside the container
+      # Needed to download age-restricted or bot-protected YouTube videos.
+      - YTDL_COOKIES_FILE=${YTDL_COOKIES_FILE:-}
       # Set WEBHOOK=1 to load sample_config.py instead of config.py
       - WEBHOOK=1
     volumes:
       # Persist downloaded/uploaded files across container restarts
       - ./DOWNLOADS:/app/DOWNLOADS
+      # Optional: mount your exported cookies file here
+      # To use: export cookies.txt next to docker-compose.yml, then set:
+      #   YTDL_COOKIES_FILE=/app/cookies.txt  in your .env
+      - ./cookies.txt:/app/cookies.txt:ro
