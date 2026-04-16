@@ -82,7 +82,7 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
-            "--no-check-formats",   # Skip format validation during info fetch
+            "--no-check-formats",
             "-j",
             url,
             "--proxy", Config.HTTP_PROXY
@@ -91,11 +91,19 @@ async def echo(bot, update):
         command_to_exec = [
             "yt-dlp",
             "--no-warnings",
-            "--no-check-formats",   # Skip format validation during info fetch
+            "--no-check-formats",
             "-j",
             url
         ]
-    # Pass cookies file if configured (helps bypass YouTube bot-detection)
+    # Force tv_embedded player client for YouTube.
+    # This bypasses bot-detection without needing cookies because YouTube
+    # treats its own TV/embedded player as a trusted first-party client.
+    if "youtu" in url:
+        command_to_exec += [
+            "--extractor-args",
+            "youtube:player_client=tv_embedded,web"
+        ]
+    # Pass cookies file if configured (additional layer of auth)
     if Config.YTDL_COOKIES_FILE and os.path.isfile(Config.YTDL_COOKIES_FILE):
         command_to_exec += ["--cookies", Config.YTDL_COOKIES_FILE]
     if youtube_dl_username is not None:

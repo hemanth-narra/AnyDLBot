@@ -143,7 +143,7 @@ async def youtube_dl_call_back(bot, update):
             "-c",
             "--embed-subs",
             "-f", minus_f_format,
-            "--hls-prefer-ffmpeg", youtube_dl_url,
+            "--hls-use-mpegts", youtube_dl_url,
             "-o", download_directory
         ]
     if Config.HTTP_PROXY != "":
@@ -156,10 +156,15 @@ async def youtube_dl_call_back(bot, update):
         command_to_exec.append("--password")
         command_to_exec.append(youtube_dl_password)
     command_to_exec.append("--no-warnings")
-    # Pass cookies file if configured (helps bypass YouTube bot-detection)
+    # Pass cookies file if configured
     if Config.YTDL_COOKIES_FILE and os.path.isfile(Config.YTDL_COOKIES_FILE):
         command_to_exec += ["--cookies", Config.YTDL_COOKIES_FILE]
-    # command_to_exec.append("--quiet")
+    # Force tv_embedded player client for YouTube to bypass bot-detection
+    if "youtu" in youtube_dl_url:
+        command_to_exec += [
+            "--extractor-args",
+            "youtube:player_client=tv_embedded,web"
+        ]
     logger.info(command_to_exec)
     start = datetime.now()
     process = await asyncio.create_subprocess_exec(
