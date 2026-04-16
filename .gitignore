@@ -218,3 +218,6 @@ config.py
 
 credential.json
 client_secrets.json
+
+# YouTube cookies — contains your personal session tokens, never commit!
+cookies.txt

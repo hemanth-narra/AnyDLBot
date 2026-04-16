@@ -13,6 +13,7 @@ A Telegram bot that downloads videos and files from **1000+ websites** (YouTube,
 | **Large file support** | Files > ~2 GB are automatically split and uploaded as numbered parts |
 | **Custom thumbnails** | Send any photo to the bot to set it as the thumbnail for the next upload |
 | **Ban list** | Block specific users by Telegram ID (`BANNED_USERS`) |
+| **YouTube cookies** | Mount a `cookies.txt` to bypass YouTube bot-detection / age restrictions |
 | **Docker ready** | Single-command deployment via Docker Compose |
 
 ---
@@ -84,7 +85,70 @@ docker compose down
 
 ---
 
-### Step 4 — Updating
+### Step 4 — (Optional) Set up YouTube cookies
+
+YouTube increasingly blocks downloads from server IPs with a **"Sign in to confirm you're not a bot"** error. The fix is to export your browser's YouTube cookies and give them to the bot.
+
+#### Why cookies are needed
+
+YouTube uses browser fingerprinting to detect automated bots. When you're logged into YouTube in your browser, your cookies prove you're a real user. Passing these cookies to yt-dlp lets it authenticate as you.
+
+#### Step-by-step: Export cookies from your browser
+
+> ⚠️ **Do this on your local machine** (laptop/desktop), not on the server. You need a browser logged into YouTube.
+
+**Option A — Automatic export via yt-dlp (easiest)**
+
+```bash
+# Install yt-dlp locally if you haven't already
+pip install yt-dlp
+
+# Export cookies straight from Chrome (close Chrome first on some systems)
+yt-dlp --cookies-from-browser chrome --cookies cookies.txt "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# Or from Firefox
+yt-dlp --cookies-from-browser firefox --cookies cookies.txt "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# Or from Edge
+yt-dlp --cookies-from-browser edge --cookies cookies.txt "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+```
+
+This creates a `cookies.txt` file in Netscape format.
+
+**Option B — Browser extension**
+
+Install one of these extensions, then export cookies for `youtube.com`:
+- Chrome/Edge: [cookies.txt](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc)
+- Firefox: [cookies.txt](https://addons.mozilla.org/en-US/firefox/addon/cookies-txt/)
+
+#### Step-by-step: Activate cookies in Docker
+
+**1. Copy `cookies.txt` to your server** (next to `docker-compose.yml`):
+
+```bash
+scp cookies.txt ubuntu@your-server:~/AnyDLBot/cookies.txt
+```
+
+**2. Add `YTDL_COOKIES_FILE` to your `.env` file** on the server:
+
+```bash
+# .env
+YTDL_COOKIES_FILE=/app/cookies.txt
+```
+
+**3. Restart the bot:**
+
+```bash
+docker compose up -d
+```
+
+The `cookies.txt` file is already volume-mounted read-only at `/app/cookies.txt` in the default `docker-compose.yml`. No rebuild is needed.
+
+> 💡 **Tip:** Cookies expire after a few weeks. If YouTube downloads start failing again, re-export `cookies.txt` and copy it back to the server — no rebuild needed, just `docker compose restart anydlbot`.
+
+---
+
+### Step 5 — Updating
 
 ```bash
 git pull
@@ -111,9 +175,11 @@ services:
       - HTTP_PROXY=${HTTP_PROXY:-}
       - CHUNK_SIZE=${CHUNK_SIZE:-128}
       - DEF_THUMB_NAIL_VID_S=${DEF_THUMB_NAIL_VID_S:-}
+      - YTDL_COOKIES_FILE=${YTDL_COOKIES_FILE:-}   # Optional: /app/cookies.txt
       - WEBHOOK=1
     volumes:
-      - ./DOWNLOADS:/app/DOWNLOADS   # Persists downloaded files across restarts
+      - ./DOWNLOADS:/app/DOWNLOADS          # Persists files across restarts
+      - ./cookies.txt:/app/cookies.txt:ro   # Optional: YouTube cookies
 ```
 
 > `restart: unless-stopped` means the bot restarts automatically after a server reboot or crash.
@@ -185,6 +251,7 @@ python bot.py
 | `HTTP_PROXY` | No | _(none)_ | Proxy URL for geo-restricted downloads (e.g. `socks5://127.0.0.1:1080`) |
 | `CHUNK_SIZE` | No | `128` | Download chunk size in bytes |
 | `DEF_THUMB_NAIL_VID_S` | No | _(none)_ | Fallback thumbnail URL when a video has no thumbnail |
+| `YTDL_COOKIES_FILE` | No | _(none)_ | Path to a Netscape `cookies.txt` inside the container (e.g. `/app/cookies.txt`) — bypasses YouTube bot-detection |
 | `WEBHOOK` | No | `0` | **Must be `1` in Docker** — tells the bot to load config from env vars |
 
 > ⚠️ `AUTH_USERS` is present in `sample_config.py` but is **not enforced anywhere in the bot logic** — setting it has no effect. Leave it out of your `.env`.
@@ -192,6 +259,14 @@ python bot.py
 ---
 
 ## 🔍 Troubleshooting
+
+### YouTube says "Sign in to confirm you're not a bot"
+
+This is YouTube's bot-detection blocking server IPs. Fix: export your browser cookies and mount them into the container.
+
+See **[Step 4 — Set up YouTube cookies](#step-4--optional-set-up-youtube-cookies)** for the full guide.
+
+> 💡 Quick fix: `yt-dlp --cookies-from-browser chrome --cookies cookies.txt "<any youtube url>"` then `scp cookies.txt server:~/AnyDLBot/` and add `YTDL_COOKIES_FILE=/app/cookies.txt` to your `.env`.
 
 ### Bot doesn't respond to messages
 - Verify `TG_BOT_TOKEN` is correct and the bot is not stopped.
@@ -236,6 +311,7 @@ AnyDLBot/
 ├── Dockerfile                    # Docker image build instructions
 ├── docker-compose.yml            # Docker Compose service definition
 ├── .env.example                  # Environment variable template
+├── cookies.txt                   # YouTube cookies (optional, gitignored)
 ├── requirements.txt              # Python dependencies
 ├── plugins/
 │   ├── youtube_dl_echo.py        # URL detection, yt-dlp info fetch & format buttons
