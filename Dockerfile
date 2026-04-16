@@ -9,13 +9,15 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Install system dependencies:
-#   ffmpeg  – required for screenshot generation and audio extraction
-#   wget    – used for downloading resources
-#   ca-certs – HTTPS support
+#   ffmpeg        – required for video splitting, screenshots and audio extraction
+#   gcc / python3-dev – required to compile tgcrypto (C extension)
+#   wget / ca-certificates – HTTPS support
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ffmpeg \
         wget \
         ca-certificates \
+        gcc \
+        python3-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -26,6 +28,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
+# gcc is needed here to compile tgcrypto; we keep the compiler in the image
+# because slim base images don't ship it by default.
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the full project
