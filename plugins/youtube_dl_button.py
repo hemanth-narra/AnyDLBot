@@ -33,7 +33,7 @@ from hachoir.parser import createParser
 # https://stackoverflow.com/a/37631799/4723940
 from PIL import Image
 from helper_funcs.help_Nekmo_ffmpeg import generate_screen_shots
-from pyrogram.types import InputMediaPhoto
+from pyrogram.types import InputMediaPhoto, MessageEntityType
 
 
 async def youtube_dl_call_back(bot, update):
@@ -41,16 +41,16 @@ async def youtube_dl_call_back(bot, update):
     # youtube_dl extractors
     tg_send_type, youtube_dl_format, youtube_dl_ext = cb_data.split("|")
     thumb_image_path = Config.DOWNLOAD_LOCATION + \
-        "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.message_id}.jpg"
+        "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.id}.jpg"
     save_ytdl_json_path = Config.DOWNLOAD_LOCATION + \
-        "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.message_id}.json"
+        "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.id}.json"
     try:
         with open(save_ytdl_json_path, "r", encoding="utf8") as f:
             response_json = json.load(f)
     except (FileNotFoundError) as e:
         await bot.delete_messages(
             chat_id=update.message.chat.id,
-            message_ids=update.message.message_id,
+            message_ids=update.message.id,
             revoke=True
         )
         return False
@@ -71,9 +71,9 @@ async def youtube_dl_call_back(bot, update):
             youtube_dl_password = url_parts[3]
         else:
             for entity in update.message.reply_to_message.entities:
-                if entity.type == "text_link":
+                if entity.type == MessageEntityType.TEXT_LINK:
                     youtube_dl_url = entity.url
-                elif entity.type == "url":
+                elif entity.type == MessageEntityType.URL:
                     o = entity.offset
                     l = entity.length
                     youtube_dl_url = youtube_dl_url[o:o + l]
@@ -90,22 +90,22 @@ async def youtube_dl_call_back(bot, update):
         logger.info(custom_file_name)
     else:
         for entity in update.message.reply_to_message.entities:
-            if entity.type == "text_link":
+            if entity.type == MessageEntityType.TEXT_LINK:
                 youtube_dl_url = entity.url
-            elif entity.type == "url":
+            elif entity.type == MessageEntityType.URL:
                 o = entity.offset
                 l = entity.length
                 youtube_dl_url = youtube_dl_url[o:o + l]
     await bot.edit_message_text(
         text=Translation.DOWNLOAD_START,
         chat_id=update.message.chat.id,
-        message_id=update.message.message_id
+        message_id=update.message.id
     )
     description = Translation.CUSTOM_CAPTION_UL_FILE
     if "fulltitle" in response_json:
         description = response_json["fulltitle"][0:1021]
         # escape Markdown and special characters
-    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.message_id}"
+    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.id}"
     if not os.path.isdir(tmp_directory_for_each_user):
         os.makedirs(tmp_directory_for_each_user)
     download_directory = tmp_directory_for_each_user + "/" + custom_file_name
@@ -166,7 +166,7 @@ async def youtube_dl_call_back(bot, update):
         error_message = e_response.replace(ad_string_to_replace, "")
         await bot.edit_message_text(
             chat_id=update.message.chat.id,
-            message_id=update.message.message_id,
+            message_id=update.message.id,
             text=error_message
         )
         return False
@@ -187,7 +187,7 @@ async def youtube_dl_call_back(bot, update):
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
                 text=Translation.SPLITTING_VIDEO.format(humanbytes(file_size)),
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 parse_mode="html"
             )
             try:
@@ -196,7 +196,7 @@ async def youtube_dl_call_back(bot, update):
                 await bot.edit_message_text(
                     chat_id=update.message.chat.id,
                     text=Translation.NO_VOID_FORMAT_FOUND.format(str(split_err)),
-                    message_id=update.message.message_id,
+                    message_id=update.message.id,
                     parse_mode="html"
                 )
                 return False
@@ -207,7 +207,7 @@ async def youtube_dl_call_back(bot, update):
                 await bot.edit_message_text(
                     chat_id=update.message.chat.id,
                     text=Translation.UPLOADING_PART.format(idx, total_parts),
-                    message_id=update.message.message_id,
+                    message_id=update.message.id,
                     parse_mode="html"
                 )
                 part_start = time.time()
@@ -233,7 +233,7 @@ async def youtube_dl_call_back(bot, update):
                         height=p_height,
                         supports_streaming=True,
                         thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
-                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        reply_to_message_id=update.message.reply_to_message.id,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             Translation.UPLOADING_PART.format(idx, total_parts),
@@ -247,7 +247,7 @@ async def youtube_dl_call_back(bot, update):
                         document=part_path,
                         caption=f"Part {idx}/{total_parts}",
                         thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
-                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        reply_to_message_id=update.message.reply_to_message.id,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             Translation.UPLOADING_PART.format(idx, total_parts),
@@ -264,7 +264,7 @@ async def youtube_dl_call_back(bot, update):
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
                 text=Translation.SPLIT_UPLOAD_DONE.format(total_parts, total_elapsed),
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 parse_mode="html"
             )
             try:
@@ -286,7 +286,7 @@ async def youtube_dl_call_back(bot, update):
             await bot.edit_message_text(
                 text=Translation.UPLOAD_START,
                 chat_id=update.message.chat.id,
-                message_id=update.message.message_id
+                message_id=update.message.id
             )
             # get the correct width, height, and duration for videos greater than 10MB
             # ref: message from @BotSupport
@@ -339,7 +339,7 @@ async def youtube_dl_call_back(bot, update):
                     # title=response_json["title"],
                     # reply_markup=reply_markup,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -355,7 +355,7 @@ async def youtube_dl_call_back(bot, update):
                     caption=description,
                     parse_mode="HTML",
                     # reply_markup=reply_markup,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -370,7 +370,7 @@ async def youtube_dl_call_back(bot, update):
                     duration=duration,
                     length=width,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -390,7 +390,7 @@ async def youtube_dl_call_back(bot, update):
                     supports_streaming=True,
                     # reply_markup=reply_markup,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -430,7 +430,7 @@ async def youtube_dl_call_back(bot, update):
                 await bot.send_media_group(
                     chat_id=update.message.chat.id,
                     disable_notification=True,
-                    reply_to_message_id=update.message.message_id,
+                    reply_to_message_id=update.message.id,
                     media=media_album_p
                 )
             #
@@ -442,6 +442,6 @@ async def youtube_dl_call_back(bot, update):
             await bot.edit_message_text(
                 text=Translation.AFTER_SUCCESSFUL_UPLOAD_MSG_WITH_TS.format(time_taken_for_download, time_taken_for_upload),
                 chat_id=update.message.chat.id,
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 disable_web_page_preview=True
             )

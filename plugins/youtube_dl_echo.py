@@ -27,7 +27,7 @@ logging.getLogger("pyrogram").setLevel(logging.WARNING)
 from helper_funcs.display_progress import humanbytes
 from helper_funcs.help_uploadbot import DownLoadFile
 
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, MessageEntityType
 
 
 @pyrogram.Client.on_message(pyrogram.filters.regex(pattern=".*http.*"))
@@ -52,9 +52,9 @@ async def echo(bot, update):
             youtube_dl_password = url_parts[3]
         else:
             for entity in update.entities:
-                if entity.type == "text_link":
+                if entity.type == MessageEntityType.TEXT_LINK:
                     url = entity.url
-                elif entity.type == "url":
+                elif entity.type == MessageEntityType.URL:
                     o = entity.offset
                     l = entity.length
                     url = url[o:o + l]
@@ -71,9 +71,9 @@ async def echo(bot, update):
         logger.info(file_name)
     else:
         for entity in update.entities:
-            if entity.type == "text_link":
+            if entity.type == MessageEntityType.TEXT_LINK:
                 url = entity.url
-            elif entity.type == "url":
+            elif entity.type == MessageEntityType.URL:
                 o = entity.offset
                 l = entity.length
                 url = url[o:o + l]
@@ -122,7 +122,7 @@ async def echo(bot, update):
         await bot.send_message(
             chat_id=update.chat.id,
             text=Translation.NO_VOID_FORMAT_FOUND.format(str(error_message)),
-            reply_to_message_id=update.message_id,
+            reply_to_message_id=update.id,
             parse_mode="html",
             disable_web_page_preview=True
         )
@@ -134,7 +134,7 @@ async def echo(bot, update):
             x_reponse, _ = x_reponse.split("\n")
         response_json = json.loads(x_reponse)
         save_ytdl_json_path = Config.DOWNLOAD_LOCATION + \
-            "/" + str(update.from_user.id) + f"_{update.message_id}" + ".json"
+            "/" + str(update.from_user.id) + f"_{update.id}" + ".json"
         with open(save_ytdl_json_path, "w", encoding="utf8") as outfile:
             json.dump(response_json, outfile, ensure_ascii=False)
         # logger.info(response_json)
@@ -250,11 +250,11 @@ async def echo(bot, update):
         thumb_image_path = DownLoadFile(
             thumbnail_image,
             Config.DOWNLOAD_LOCATION + "/" +
-            str(update.from_user.id) + f"_{update.message_id}" + ".webp",
+            str(update.from_user.id) + f"_{update.id}" + ".webp",
             Config.CHUNK_SIZE,
             None,  # bot,
             Translation.DOWNLOAD_START,
-            update.message_id,
+            update.id,
             update.chat.id
         )
         if os.path.exists(thumb_image_path):
@@ -267,7 +267,7 @@ async def echo(bot, update):
             text=Translation.FORMAT_SELECTION.format(thumbnail) + "\n" + Translation.SET_CUSTOM_USERNAME_PASSWORD,
             reply_markup=reply_markup,
             parse_mode="html",
-            reply_to_message_id=update.message_id
+            reply_to_message_id=update.id
         )
     else:
         # fallback for nonnumeric port a.k.a seedbox.io
@@ -292,5 +292,5 @@ async def echo(bot, update):
             text=Translation.FORMAT_SELECTION.format(""),
             reply_markup=reply_markup,
             parse_mode="html",
-            reply_to_message_id=update.message_id
+            reply_to_message_id=update.id
         )

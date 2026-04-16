@@ -31,6 +31,7 @@ from hachoir.metadata import extractMetadata
 from hachoir.parser import createParser
 # https://stackoverflow.com/a/37631799/4723940
 from PIL import Image
+from pyrogram.types import MessageEntityType
 
 
 async def ddl_call_back(bot, update):
@@ -49,9 +50,9 @@ async def ddl_call_back(bot, update):
             custom_file_name = url_parts[1]
         else:
             for entity in update.message.reply_to_message.entities:
-                if entity.type == "text_link":
+                if entity.type == MessageEntityType.TEXT_LINK:
                     youtube_dl_url = entity.url
-                elif entity.type == "url":
+                elif entity.type == MessageEntityType.URL:
                     o = entity.offset
                     l = entity.length
                     youtube_dl_url = youtube_dl_url[o:o + l]
@@ -64,9 +65,9 @@ async def ddl_call_back(bot, update):
         logger.info(custom_file_name)
     else:
         for entity in update.message.reply_to_message.entities:
-            if entity.type == "text_link":
+            if entity.type == MessageEntityType.TEXT_LINK:
                 youtube_dl_url = entity.url
-            elif entity.type == "url":
+            elif entity.type == MessageEntityType.URL:
                 o = entity.offset
                 l = entity.length
                 youtube_dl_url = youtube_dl_url[o:o + l]
@@ -75,9 +76,9 @@ async def ddl_call_back(bot, update):
     await bot.edit_message_text(
         text=Translation.DOWNLOAD_START,
         chat_id=update.message.chat.id,
-        message_id=update.message.message_id
+        message_id=update.message.id
     )
-    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.message_id}"
+    tmp_directory_for_each_user = Config.DOWNLOAD_LOCATION + "/" + str(update.from_user.id) + f"_{update.message.reply_to_message.id}"
     if not os.path.isdir(tmp_directory_for_each_user):
         os.makedirs(tmp_directory_for_each_user)
     download_directory = tmp_directory_for_each_user + "/" + custom_file_name
@@ -91,14 +92,14 @@ async def ddl_call_back(bot, update):
                 youtube_dl_url,
                 download_directory,
                 update.message.chat.id,
-                update.message.message_id,
+                update.message.id,
                 c_time
             )
         except asyncio.TimeoutError:
             await bot.edit_message_text(
                 text=Translation.SLOW_URL_DECED,
                 chat_id=update.message.chat.id,
-                message_id=update.message.message_id
+                message_id=update.message.id
             )
             return False
     if os.path.exists(download_directory):
@@ -106,7 +107,7 @@ async def ddl_call_back(bot, update):
         await bot.edit_message_text(
             text=Translation.UPLOAD_START,
             chat_id=update.message.chat.id,
-            message_id=update.message.message_id
+            message_id=update.message.id
         )
         file_size = 0
         try:
@@ -120,7 +121,7 @@ async def ddl_call_back(bot, update):
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
                 text=Translation.SPLITTING_VIDEO.format(humanbytes(file_size)),
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 parse_mode="html"
             )
             try:
@@ -129,7 +130,7 @@ async def ddl_call_back(bot, update):
                 await bot.edit_message_text(
                     chat_id=update.message.chat.id,
                     text=Translation.NO_VOID_FORMAT_FOUND.format(str(split_err)),
-                    message_id=update.message.message_id,
+                    message_id=update.message.id,
                     parse_mode="html"
                 )
                 return False
@@ -141,7 +142,7 @@ async def ddl_call_back(bot, update):
                 await bot.edit_message_text(
                     chat_id=update.message.chat.id,
                     text=Translation.UPLOADING_PART.format(idx, total_parts),
-                    message_id=update.message.message_id,
+                    message_id=update.message.id,
                     parse_mode="html"
                 )
                 part_start = time.time()
@@ -168,7 +169,7 @@ async def ddl_call_back(bot, update):
                         height=p_height,
                         supports_streaming=True,
                         thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
-                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        reply_to_message_id=update.message.reply_to_message.id,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             Translation.UPLOADING_PART.format(idx, total_parts),
@@ -182,7 +183,7 @@ async def ddl_call_back(bot, update):
                         document=part_path,
                         caption=f"Part {idx}/{total_parts}",
                         thumb=thumb_image_path if os.path.exists(str(thumb_image_path)) else None,
-                        reply_to_message_id=update.message.reply_to_message.message_id,
+                        reply_to_message_id=update.message.reply_to_message.id,
                         progress=progress_for_pyrogram,
                         progress_args=(
                             Translation.UPLOADING_PART.format(idx, total_parts),
@@ -199,7 +200,7 @@ async def ddl_call_back(bot, update):
             await bot.edit_message_text(
                 chat_id=update.message.chat.id,
                 text=Translation.SPLIT_UPLOAD_DONE.format(total_parts, total_elapsed),
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 parse_mode="html"
             )
             # Clean up original large file
@@ -260,7 +261,7 @@ async def ddl_call_back(bot, update):
                     # title=response_json["title"],
                     # reply_markup=reply_markup,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -275,7 +276,7 @@ async def ddl_call_back(bot, update):
                     thumb=thumb_image_path,
                     caption=description,
                     # reply_markup=reply_markup,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -290,7 +291,7 @@ async def ddl_call_back(bot, update):
                     duration=duration,
                     length=width,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -309,7 +310,7 @@ async def ddl_call_back(bot, update):
                     supports_streaming=True,
                     # reply_markup=reply_markup,
                     thumb=thumb_image_path,
-                    reply_to_message_id=update.message.reply_to_message.message_id,
+                    reply_to_message_id=update.message.reply_to_message.id,
                     progress=progress_for_pyrogram,
                     progress_args=(
                         Translation.UPLOAD_START,
@@ -330,14 +331,14 @@ async def ddl_call_back(bot, update):
             await bot.edit_message_text(
                 text=Translation.AFTER_SUCCESSFUL_UPLOAD_MSG_WITH_TS.format(time_taken_for_download, time_taken_for_upload),
                 chat_id=update.message.chat.id,
-                message_id=update.message.message_id,
+                message_id=update.message.id,
                 disable_web_page_preview=True
             )
     else:
         await bot.edit_message_text(
             text=Translation.NO_VOID_FORMAT_FOUND.format("Incorrect Link"),
             chat_id=update.message.chat.id,
-            message_id=update.message.message_id,
+            message_id=update.message.id,
             disable_web_page_preview=True
         )
 
